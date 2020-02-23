@@ -1,5 +1,4 @@
 use std::io::{self, Write};
-use std::error::Error;
 
 /// Represents the position of a tile on the grid
 #[derive(Debug, Clone, PartialEq)]

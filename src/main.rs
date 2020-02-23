@@ -2,10 +2,16 @@ use std::io::{self, Write};
 use std::error::Error;
 
 /// Represents the position of a tile on the grid
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct TilePos {
     row: usize,
     col: usize,
+}
+
+impl TilePos {
+    fn to_string(&self) -> String {
+        format!("{}{}", (self.col as u8 - b'A') as char, self.row)
+    }
 }
 
 /// Represents the different colors/types of pieces
@@ -145,7 +151,12 @@ impl Reversi {
     }
 }
 
-fn print_game(game: &Reversi) {
+fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
+}
+
+#[derive(Debug)]
+enum ParseError {
+    IOError(io::Error),
 }
 
 /// Parses a move from an input string in the format "A1" or "1A" where "A" is the column and "1"
@@ -153,33 +164,54 @@ fn print_game(game: &Reversi) {
 ///
 /// Returns `Ok(None)` if EOF was received.
 /// Returns `Err(...)` if something went wrong.
-fn parse_move(line: &str) -> Result<Option<TilePos>, io::Error> {
+fn parse_move(line: &str) -> Result<Option<TilePos>, ParseError> {
     todo!()
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+/// Repeatedly prompt for the move until a valid one is returned or EOF is recieved
+///
+/// See `parse_move` for more information.
+fn prompt_move(valid_moves: &[TilePos]) -> Result<Option<TilePos>, ParseError> {
+    loop {
+        print!("Enter your move (e.g. A1): ");
+        // Need to flush because output is line buffered
+        io::stdout().flush().map_err(ParseError::IOError)?;
+
+        let mut line = String::new();
+        io::stdin().read_line(&mut line).map_err(ParseError::IOError)?;
+
+        match parse_move(&line) {
+            Ok(Some(pmove)) => {
+                if !valid_moves.contains(&pmove) {
+                    println!("Invalid move: {}", pmove.to_string());
+                    continue;
+                }
+
+                return Ok(Some(pmove));
+            },
+
+            Ok(None) => break Ok(None),
+
+            err@Err(ParseError::IOError(_)) => return err,
+        }
+    }
+}
+
+fn main() {
     let mut game = Reversi::new();
 
     loop {
-        print_game(&game);
+        let valid_moves = game.valid_moves();
+        print_game(&game, &valid_moves);
         println!();
 
         println!("Score: ", );
         println!("The current piece is: ", );
 
-        print!("Enter your move (e.g. A1): ");
-        // Need to flush because output is line buffered
-        io::stdout().flush()?;
-
-        let mut line = String::new();
-        io::stdin().read_line(&mut line)?;
-
-        match parse_move(&line) {
-            Ok(Some(pmove)) => game.make_move(pmove),
-            Ok(None) => break,
-            Err(err) => Err(err)?,
+        let pmove = prompt_move(&valid_moves).unwrap();
+        match pmove {
+            Some(pmove) => game.make_move(pmove),
+            None => break,
         }
     }
-
-    Ok(())
 }

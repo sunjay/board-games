@@ -32,3 +32,10 @@
   ```
 * `adjacents` can also be written as a series of 8 if statements
 * Implement `Display` for `Reversi`
+* Implement `Display` and `Error` for `ParseError`
+* Implement `From<io::Error>` for `ParseError`
+  * Allows you to use the ? operator and get rid of `map_err`
+* Return `Result<(), Box<dyn Error>>` from `main`
+  * Mention `anyhow`
+* Import variants using `use ParseError::*` to make code easier to read
+* Implement `Display` for `TilePos` to avoid allocation in `TilePos::to_string`

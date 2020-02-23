@@ -31,3 +31,4 @@
   }
   ```
 * `adjacents` can also be written as a series of 8 if statements
+* Implement `Display` for `Reversi`

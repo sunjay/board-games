@@ -1,3 +1,6 @@
+use std::io::{self, Write};
+use std::error::Error;
+
 /// Represents the position of a tile on the grid
 #[derive(Debug, Clone)]
 struct TilePos {
@@ -142,5 +145,41 @@ impl Reversi {
     }
 }
 
-fn main() {
+fn print_game(game: &Reversi) {
+}
+
+/// Parses a move from an input string in the format "A1" or "1A" where "A" is the column and "1"
+/// is the row. The move string is not case-sensitive.
+///
+/// Returns `Ok(None)` if EOF was received.
+/// Returns `Err(...)` if something went wrong.
+fn parse_move(line: &str) -> Result<Option<TilePos>, io::Error> {
+    todo!()
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let mut game = Reversi::new();
+
+    loop {
+        print_game(&game);
+        println!();
+
+        println!("Score: ", );
+        println!("The current piece is: ", );
+
+        print!("Enter your move (e.g. A1): ");
+        // Need to flush because output is line buffered
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        io::stdin().read_line(&mut line)?;
+
+        match parse_move(&line) {
+            Ok(Some(pmove)) => game.make_move(pmove),
+            Ok(None) => break,
+            Err(err) => Err(err)?,
+        }
+    }
+
+    Ok(())
 }

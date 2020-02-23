@@ -156,6 +156,7 @@ fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
 
 #[derive(Debug)]
 enum ParseError {
+    InvalidInput(String),
     IOError(io::Error),
 }
 
@@ -164,8 +165,26 @@ enum ParseError {
 ///
 /// Returns `Ok(None)` if EOF was received.
 /// Returns `Err(...)` if something went wrong.
-fn parse_move(line: &str) -> Result<Option<TilePos>, ParseError> {
-    todo!()
+fn parse_move(line: String) -> Result<Option<TilePos>, ParseError> {
+    let bytes = line.as_bytes();
+    let first = bytes[0];
+    let second = bytes[0];
+    match bytes {
+        [b'A' ..= b'H', 1 ..= 8] => {
+            Ok(Some(TilePos {row: second as usize, col: (first - b'A') as usize}))
+        },
+        [b'a' ..= b'h', 1 ..= 8] => {
+            Ok(Some(TilePos {row: second as usize, col: (first - b'a') as usize}))
+        },
+        [1 ..= 8, b'A' ..= b'H'] => {
+            Ok(Some(TilePos {row: first as usize, col: (second - b'A') as usize}))
+        },
+        [1 ..= 8, b'a' ..= b'h'] => {
+            Ok(Some(TilePos {row: first as usize, col: (second - b'a') as usize}))
+        },
+
+        _ => Err(ParseError::InvalidInput(line)),
+    }
 }
 
 /// Repeatedly prompt for the move until a valid one is returned or EOF is recieved
@@ -180,7 +199,7 @@ fn prompt_move(valid_moves: &[TilePos]) -> Result<Option<TilePos>, ParseError> {
         let mut line = String::new();
         io::stdin().read_line(&mut line).map_err(ParseError::IOError)?;
 
-        match parse_move(&line) {
+        match parse_move(line) {
             Ok(Some(pmove)) => {
                 if !valid_moves.contains(&pmove) {
                     println!("Invalid move: {}", pmove.to_string());
@@ -192,6 +211,7 @@ fn prompt_move(valid_moves: &[TilePos]) -> Result<Option<TilePos>, ParseError> {
 
             Ok(None) => break Ok(None),
 
+            Err(ParseError::InvalidInput(inp)) => println!("Invalid input: {}", inp),
             err@Err(ParseError::IOError(_)) => return err,
         }
     }

@@ -126,6 +126,11 @@ impl Reversi {
         &self.grid
     }
 
+    /// Returns the current player
+    fn current_player(&self) -> Piece {
+        self.current_player.clone()
+    }
+
     /// Returns the current scores for each player as a tuple: (x score, o score)
     fn scores(&self) -> (u32, u32) {
         let mut x_score = 0;
@@ -189,14 +194,14 @@ fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
 
 fn print_tile(tile: &Option<Piece>, is_valid_move: bool) {
     match tile {
-        Some(piece) => print_cell(format_piece(piece)),
+        Some(piece) => print_cell(format_piece(piece.clone())),
 
         None if is_valid_move => print_cell(Paint::yellow("\u{25CB}")),
         None => print_cell(Paint::new(" ")),
     }
 }
 
-fn format_piece(piece: &Piece) -> Paint<&'static str> {
+fn format_piece(piece: Piece) -> Paint<&'static str> {
     match piece {
         Piece::X => Paint::red("\u{25CF}"),
         Piece::O => Paint::blue("\u{25CF}"),
@@ -268,14 +273,14 @@ fn prompt_move(valid_moves: &[TilePos]) -> Result<TilePos, ParseError> {
         match parse_move(line) {
             Ok(pmove) => {
                 if !valid_moves.contains(&pmove) {
-                    println!("Invalid move: {}\n", pmove.to_string());
+                    println!("Invalid move: `{}`. Your move must flip at least one tile.\n", pmove.to_string());
                     continue;
                 }
 
                 return Ok(pmove);
             },
 
-            Err(ParseError::InvalidInput(inp)) => println!("Invalid input: {}", inp),
+            Err(ParseError::InvalidInput(inp)) => println!("Invalid input: `{}`. Enter something like 'A1'.\n", inp.trim_end_matches('\n')),
             err@Err(ParseError::EndOfInput) |
             err@Err(ParseError::IOError(_)) => return err,
         }
@@ -307,14 +312,14 @@ fn main() {
             println!();
             print_game(&game, &valid_moves);
             println!();
-            println!("Score: ", );
+            println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
 
             print!("The winner is: ", );
 
             use std::cmp::Ordering::*;
             match x_score.cmp(&o_score) {
-                Greater => println!("{}", format_piece(&Piece::X)),
-                Less => println!("{}", format_piece(&Piece::O)),
+                Greater => println!("{}", format_piece(Piece::X)),
+                Less => println!("{}", format_piece(Piece::O)),
                 Equal => println!("Tie"),
             }
 
@@ -324,8 +329,8 @@ fn main() {
         println!();
         print_game(&game, &valid_moves);
         println!();
-        println!("Score: ", );
-        println!("The current piece is: ", );
+        println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
+        println!("The current piece is: {}", format_piece(game.current_player()));
 
         if valid_moves.is_empty() {
             prompt("No moves available. Skipping turn. Press enter to continue...").unwrap();

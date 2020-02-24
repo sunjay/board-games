@@ -35,7 +35,7 @@ impl Piece {
 }
 
 /// A non-empty grid with rows and columns of tables
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Grid {
     /// The tiles of the grid, stored row-by-row. Each tile is either empty (`None`), or contains
     /// a single `Piece`.
@@ -90,7 +90,7 @@ impl Grid {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Reversi {
     grid: Grid,
     /// The player whose turn it is currently
@@ -257,7 +257,15 @@ impl Reversi {
 
 /// Returns a move for the current player computed automatically
 fn compute_ai_move(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
-    random_ai(game, valid_moves)
+    enum AIType {
+        Random,
+        Negamax,
+    }
+
+    match AIType::Negamax {
+        AIType::Random => random_ai(game, valid_moves),
+        AIType::Negamax => negamax_ai(game, valid_moves),
+    }
 }
 
 /// Randomly chooses a move from the set of valid moves
@@ -270,16 +278,41 @@ fn random_ai(_game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
 
 /// Chooses a move based on the negamax algorithm
 fn negamax_ai(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
-    todo!()
+    let (pmove, _score) = negamax(game, valid_moves, game.current_player(), false, 0);
+    pmove.unwrap()
 }
 
-fn negamax(game: &Reversi, valid_moves: &[TilePos], last_move: TilePos, player: Piece, depth: usize) -> TilePos {
+fn negamax(
+    game: &Reversi,
+    valid_moves: &[TilePos],
+    player: Piece,
+    skipped: bool,
+    depth: usize,
+) -> (Option<TilePos>, i32) {
     const MAX_DEPTH: usize = 5;
-    if depth >= MAX_DEPTH {
-        return last_move;
+
+    if depth >= MAX_DEPTH || game.grid().is_full() || (skipped && valid_moves.is_empty()) {
+        let score = negamax_score(game, player.clone());
+        return (None, score);
     }
 
-    todo!()
+    let mut max_move = None;
+    let mut max_score = i32::min_value();
+    for pmove in valid_moves {
+        let mut mgame = game.clone();
+        mgame.make_move(pmove);
+
+        let mvalid_moves = mgame.valid_moves();
+        let skipped = mvalid_moves.is_empty();
+
+        let (_, score) = negamax(&mgame, &mvalid_moves, player.clone(), skipped, depth + 1);
+        if score > max_score {
+            max_move = Some(pmove.clone());
+            max_score = score;
+        }
+    }
+
+    (max_move, max_score)
 }
 
 /// Computes the negamax score for the given player. A higher score means that the current state of

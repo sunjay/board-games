@@ -21,27 +21,17 @@ enum Piece {
 }
 
 /// A non-empty grid with rows and columns of tables
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct Grid {
     /// The tiles of the grid, stored row-by-row. Each tile is either empty (`None`), or contains
     /// a single `Piece`.
     ///
     /// `tiles[r]` represents row r
     /// `tiles[r][c]` represents the tile at row r and column c
-    tiles: Vec<Vec<Option<Piece>>>,
+    tiles: [[Option<Piece>; 8]; 8],
 }
 
 impl Grid {
-    /// Creates a new grid with the given size
-    fn new(rows: usize, cols: usize) -> Self {
-        assert_ne!(rows, 0, "bug: grid must be non-empty (rows == 0)");
-        assert_ne!(cols, 0, "bug: grid must be non-empty (cols == 0)");
-
-        Self {
-            tiles: vec![vec![None; cols]; rows],
-        }
-    }
-
     /// Returns the length of each row (i.e. the number of columns)
     fn row_len(&self) -> usize {
         self.tiles[0].len()
@@ -53,7 +43,7 @@ impl Grid {
     }
 
     /// Returns a slice of the tiles of the grid
-    fn rows(&self) -> &Vec<Vec<Option<Piece>>> {
+    fn rows(&self) -> &[[Option<Piece>; 8]] {
         &self.tiles
     }
 
@@ -102,7 +92,7 @@ struct Reversi {
 impl Reversi {
     /// Creates a new reversi game with the default pieces placed
     fn new() -> Self {
-        let mut grid = Grid::new(8, 8);
+        let mut grid = Grid::default();
         // The default piece are placed in a 2x2 grid of alternating colors
         grid.place(TilePos {row: 3, col: 3}, Piece::X);
         grid.place(TilePos {row: 3, col: 4}, Piece::O);

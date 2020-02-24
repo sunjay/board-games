@@ -34,6 +34,19 @@ struct Grid {
 }
 
 impl Grid {
+    /// Returns true if the grid is completely full (no empty tiles left)
+    fn is_full(&self) -> bool {
+        for row in &self.tiles {
+            for tile in row {
+                if tile.is_none() {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /// Returns the length of each row (i.e. the number of columns)
     fn row_len(&self) -> usize {
         self.tiles[0].len()
@@ -136,6 +149,11 @@ impl Reversi {
         todo!()
     }
 
+    /// Skips the turn of the current player, leave the board unmodified
+    fn skip_turn(&mut self) {
+        todo!()
+    }
+
     /// Places a tile for the current player at the given position, updating any surrounding tiles
     /// that were affected by this move.
     ///
@@ -171,11 +189,17 @@ fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
 
 fn print_tile(tile: &Option<Piece>, is_valid_move: bool) {
     match tile {
-        Some(Piece::X) => print_cell(Paint::red("\u{25CF}")),
-        Some(Piece::O) => print_cell(Paint::blue("\u{25CF}")),
+        Some(piece) => print_cell(format_piece(piece)),
 
         None if is_valid_move => print_cell(Paint::yellow("\u{25CB}")),
         None => print_cell(Paint::new(" ")),
+    }
+}
+
+fn format_piece(piece: &Piece) -> Paint<&'static str> {
+    match piece {
+        Piece::X => Paint::red("\u{25CF}"),
+        Piece::O => Paint::blue("\u{25CF}"),
     }
 }
 
@@ -235,13 +259,7 @@ fn parse_move(line: String) -> Result<TilePos, ParseError> {
 /// Repeatedly prompt for the move until a valid one is returned or EOF is recieved
 fn prompt_move(valid_moves: &[TilePos]) -> Result<TilePos, ParseError> {
     loop {
-        print!("Enter your move (e.g. A1): ");
-        // Need to flush because output is line buffered
-        io::stdout().flush().map_err(ParseError::IOError)?;
-
-        let mut line = String::new();
-        io::stdin().read_line(&mut line).map_err(ParseError::IOError)?;
-
+        let line = prompt("Enter your move (e.g. A1): ").map_err(ParseError::IOError)?;
         if line.is_empty() {
             // Reached EOF, quit
             break Err(ParseError::EndOfInput);
@@ -264,18 +282,59 @@ fn prompt_move(valid_moves: &[TilePos]) -> Result<TilePos, ParseError> {
     }
 }
 
+fn prompt(prompt: &str) -> Result<String, io::Error> {
+    print!("{}", prompt);
+    // Need to flush because output is line buffered
+    io::stdout().flush()?;
+
+    let mut line = String::new();
+    io::stdin().read_line(&mut line)?;
+
+    Ok(line)
+}
+
 fn main() {
     let mut game = Reversi::new();
 
+    let mut skipped = false;
     loop {
+        let (x_score, o_score) = game.scores();
         let valid_moves = game.valid_moves();
+
+        // If the grid is full or the turn is skipped twice, the game ends
+        if game.grid().is_full() || (skipped && valid_moves.is_empty()) {
+            // Game has been completed
+            println!();
+            print_game(&game, &valid_moves);
+            println!();
+            println!("Score: ", );
+
+            print!("The winner is: ", );
+
+            use std::cmp::Ordering::*;
+            match x_score.cmp(&o_score) {
+                Greater => println!("{}", format_piece(&Piece::X)),
+                Less => println!("{}", format_piece(&Piece::O)),
+                Equal => println!("Tie"),
+            }
+
+            break;
+        }
 
         println!();
         print_game(&game, &valid_moves);
         println!();
-
         println!("Score: ", );
         println!("The current piece is: ", );
+
+        if valid_moves.is_empty() {
+            prompt("No moves available. Skipping turn. Press enter to continue...").unwrap();
+            skipped = true;
+            game.skip_turn();
+            continue;
+        }
+        // If the previous turn was skipped, we can reset that now
+        skipped = false;
 
         let pmove = prompt_move(&valid_moves);
         match pmove {

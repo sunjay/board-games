@@ -39,3 +39,4 @@
   * Mention `anyhow`
 * Import variants using `use ParseError::*` to make code easier to read
 * Implement `Display` for `TilePos` to avoid allocation in `TilePos::to_string`
+* Implement `is_full` in terms of iterators (using `all`)

@@ -16,10 +16,20 @@ impl TilePos {
 }
 
 /// Represents the different colors/types of pieces
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Piece {
     X,
     O,
+}
+
+impl Piece {
+    /// Returns the piece opposite to this piece
+    fn opposite(&self) -> Self {
+        match self {
+            Piece::X => Piece::O,
+            Piece::O => Piece::X,
+        }
+    }
 }
 
 /// A non-empty grid with rows and columns of tables
@@ -62,24 +72,9 @@ impl Grid {
         &self.tiles
     }
 
-    /// Returns the positions that are horizontally, vertically, and diagonally adjacent to the
-    /// given position
-    fn adjacents(&self, pos: TilePos) -> Vec<TilePos> {
-        let mut adjs = Vec::new();
-
-        let directions = &[(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
-        for &(drow, dcol) in directions {
-            let row = pos.row as isize + drow;
-            let col = pos.col as isize + dcol;
-            if row >= 0 && row < self.col_len() as isize && col >= 0 && col < self.row_len() as isize {
-                adjs.push(TilePos {
-                    row: row as usize,
-                    col: col as usize,
-                });
-            }
-        }
-
-        adjs
+    /// Returns the tile at the given position
+    fn tile(&self, pos: &TilePos) -> &Option<Piece> {
+        &self.tiles[pos.row][pos.col]
     }
 
     /// Places the given piece on the tile at the given position
@@ -151,7 +146,25 @@ impl Reversi {
 
     /// Returns all valid moves for the current player
     fn valid_moves(&self) -> Vec<TilePos> {
-        todo!()
+        // Algorithm: Find all tiles that are empty and would result in at least one flip if the
+        // current piece was placed there.
+
+        let mut valid_moves = Vec::new();
+        for (row, row_tiles) in self.grid().rows().iter().enumerate() {
+            for (col, tile) in row_tiles.iter().enumerate() {
+                // Only empty tiles can be valid moves
+                if tile.is_some() {
+                    continue;
+                }
+
+                let pmove = TilePos {row, col};
+                if !self.compute_flips(&pmove).is_empty() {
+                    valid_moves.push(pmove);
+                }
+            }
+        }
+
+        valid_moves
     }
 
     /// Skips the turn of the current player, leave the board unmodified
@@ -167,6 +180,71 @@ impl Reversi {
     /// Panics if the move is not valid for the current player.
     fn make_move(&mut self, pos: TilePos) {
         todo!()
+    }
+
+    /// Computes the tiles that would have to flip if the current piece was placed at the given
+    /// position
+    fn compute_flips(&self, pos: &TilePos) -> Vec<TilePos> {
+        // Algorithm: Search each of the 8 cardinal directions. A tile is considered a valid move
+        // if it is empty and if while searching in a direction we find at least one opponent piece
+        // and then a player piece with no empty tiles in between. The "flips" are all opponent
+        // pieces found between the given tile and another tile belonging to the player.
+        //
+        // For player = x, opponent = o,
+        //     Finding "oooox" is a valid move for x
+        //     Finding "oo" is *not* a valid move for x
+        //     Finding "oo x" is *not* a valid move for x
+        //     Finding "x" is *not* a valid move for x
+
+        let grid = self.grid();
+        debug_assert!(grid.tile(pos).is_none(),
+            "bug: cannot compute flips for a tile that is non-empty");
+
+        let player = self.current_player();
+        let opponent = player.opposite();
+
+        let nrows = grid.col_len() as isize;
+        let ncols = grid.row_len() as isize;
+
+        let mut flips = Vec::new();
+        let directions = &[(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
+        for &(drow, dcol) in directions {
+            // Opponents that can potentially be flipped
+            let mut found_opponents = Vec::new();
+            for i in 1.. {
+                let row = pos.row as isize + drow * i;
+                let col = pos.col as isize + dcol * i;
+                if row >= 0 && row < nrows && col >= 0 && col < ncols {
+                    let current_pos = TilePos {
+                        row: row as usize,
+                        col: col as usize,
+                    };
+
+                    match grid.tile(&current_pos) {
+                        Some(piece) => {
+                            if *piece == opponent {
+                                found_opponents.push(current_pos);
+
+                            } else if *piece == player {
+                                // If we didn't find any opponent pieces, this will not add any flips
+                                flips.extend(found_opponents);
+                                // Stop searching
+                                break;
+                            }
+                        },
+
+                        // Found empty, stop searching and do not add found opponents
+                        None => break,
+                    }
+
+                } else {
+                    // hit one of the boundaries of the board
+                    break;
+                }
+            }
+        }
+
+        flips
     }
 }
 

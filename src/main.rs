@@ -54,7 +54,7 @@ impl Grid {
             }
         }
 
-        return true;
+        true
     }
 
     /// Returns the length of each row (i.e. the number of columns)

@@ -314,13 +314,11 @@ fn main() {
             println!();
             println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
 
-            print!("The winner is: ", );
-
             use std::cmp::Ordering::*;
             match x_score.cmp(&o_score) {
-                Greater => println!("{}", format_piece(Piece::X)),
-                Less => println!("{}", format_piece(Piece::O)),
-                Equal => println!("Tie"),
+                Greater => println!("The winner is: {}", format_piece(Piece::X)),
+                Less => println!("The winner is: {}", format_piece(Piece::O)),
+                Equal => println!("The game ended with a tie"),
             }
 
             break;

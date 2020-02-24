@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+use yansi::Paint;
+
 /// Represents the position of a tile on the grid
 #[derive(Debug, Clone, PartialEq)]
 struct TilePos {
@@ -106,6 +108,11 @@ impl Reversi {
         }
     }
 
+    /// Returns the grid
+    fn grid(&self) -> &Grid {
+        &self.grid
+    }
+
     /// Returns the current scores for each player as a tuple: (x score, o score)
     fn scores(&self) -> (u32, u32) {
         let mut x_score = 0;
@@ -141,6 +148,50 @@ impl Reversi {
 }
 
 fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
+    let grid = game.grid();
+
+    print_cell(Paint::new(" "));
+    for col_i in 0..grid.row_len() {
+        print_cell(Paint::new(&format!("{}", (b'A' + col_i as u8) as char)));
+    }
+    println!();
+
+    print_row_sep(grid.row_len());
+
+    for (row, row_tiles) in grid.rows().iter().enumerate() {
+        print_cell(Paint::new(&format!("{}", row+1)));
+        for (col, tile) in row_tiles.iter().enumerate() {
+            print_tile(tile, valid_moves.contains(&TilePos {row, col}));
+        }
+        println!();
+
+        print_row_sep(grid.row_len());
+    }
+}
+
+fn print_tile(tile: &Option<Piece>, is_valid_move: bool) {
+    match tile {
+        Some(Piece::X) => print_cell(Paint::red("\u{25CF}")),
+        Some(Piece::O) => print_cell(Paint::blue("\u{25CF}")),
+
+        None if is_valid_move => print_cell(Paint::yellow("\u{25CB}")),
+        None => print_cell(Paint::new(" ")),
+    }
+}
+
+fn print_cell(value: Paint<&str>) {
+    print!(" {} \u{2502}", value);
+}
+
+fn print_row_sep(cols: usize) {
+    const CELL_SIZE: usize = 4;
+
+    for _ in 0..=cols {
+        for _ in 0..CELL_SIZE {
+            print!("\u{2500}");
+        }
+    }
+    println!();
 }
 
 #[derive(Debug)]
@@ -218,6 +269,8 @@ fn main() {
 
     loop {
         let valid_moves = game.valid_moves();
+
+        println!();
         print_game(&game, &valid_moves);
         println!();
 

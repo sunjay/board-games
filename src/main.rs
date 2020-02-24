@@ -9,7 +9,7 @@ struct TilePos {
 
 impl TilePos {
     fn to_string(&self) -> String {
-        format!("{}{}", (self.col as u8 - b'A') as char, self.row)
+        format!("{}{}", (b'A' + self.col as u8) as char, self.row + 1)
     }
 }
 
@@ -153,20 +153,29 @@ enum ParseError {
 /// Parses a move from an input string in the format "A1" or "1A" where "A" is the column and "1"
 /// is the row. The move string is not case-sensitive.
 fn parse_move(line: String) -> Result<TilePos, ParseError> {
+    fn byte_to_usize(byte: u8, start: u8) -> usize {
+        (byte - start) as usize
+    }
+
     let bytes = line.as_bytes();
-    match bytes {
-        [b'A' ..= b'H', 1 ..= 8] => {
-            Ok(TilePos {row: bytes[1] as usize, col: (bytes[0] - b'A') as usize})
-        },
-        [b'a' ..= b'h', 1 ..= 8] => {
-            Ok(TilePos {row: bytes[1] as usize, col: (bytes[0] - b'a') as usize})
-        },
-        [1 ..= 8, b'A' ..= b'H'] => {
-            Ok(TilePos {row: bytes[0] as usize, col: (bytes[1] - b'A') as usize})
-        },
-        [1 ..= 8, b'a' ..= b'h'] => {
-            Ok(TilePos {row: bytes[0] as usize, col: (bytes[1] - b'a') as usize})
-        },
+    // Leave off the newline when matching
+    match &bytes[0..bytes.len()-1] {
+        [b'A' ..= b'H', b'1' ..= b'8'] => Ok(TilePos {
+            row: byte_to_usize(bytes[1], b'1'),
+            col: byte_to_usize(bytes[0], b'A'),
+        }),
+        [b'a' ..= b'h', b'1' ..= b'8'] => Ok(TilePos {
+            row: byte_to_usize(bytes[1], b'1'),
+            col: byte_to_usize(bytes[0], b'a'),
+        }),
+        [b'1' ..= b'8', b'A' ..= b'H'] => Ok(TilePos {
+            row: byte_to_usize(bytes[0], b'1'),
+            col: byte_to_usize(bytes[1], b'A'),
+        }),
+        [b'1' ..= b'8', b'a' ..= b'h'] => Ok(TilePos {
+            row: byte_to_usize(bytes[0], b'1'),
+            col: byte_to_usize(bytes[1], b'a'),
+        }),
 
         _ => Err(ParseError::InvalidInput(line)),
     }
@@ -190,7 +199,7 @@ fn prompt_move(valid_moves: &[TilePos]) -> Result<TilePos, ParseError> {
         match parse_move(line) {
             Ok(pmove) => {
                 if !valid_moves.contains(&pmove) {
-                    println!("Invalid move: {}", pmove.to_string());
+                    println!("Invalid move: {}\n", pmove.to_string());
                     continue;
                 }
 
@@ -219,7 +228,11 @@ fn main() {
         match pmove {
             Ok(pmove) => game.make_move(pmove),
 
-            Err(ParseError::EndOfInput) => break,
+            Err(ParseError::EndOfInput) => {
+                // Print a final newline
+                println!();
+                break;
+            },
 
             Err(ParseError::InvalidInput(_)) => unreachable!(),
 

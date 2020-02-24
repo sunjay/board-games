@@ -260,11 +260,115 @@ fn compute_ai_move(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
     random_ai(game, valid_moves)
 }
 
+/// Randomly chooses a move from the set of valid moves
 fn random_ai(_game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
     use rand::seq::SliceRandom;
 
     let mut rng = rand::thread_rng();
     valid_moves.choose(&mut rng).expect("bug: no valid moves to choose from").clone()
+}
+
+/// Chooses a move based on the negamax algorithm
+fn negamax_ai(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
+    todo!()
+}
+
+fn negamax(game: &Reversi, valid_moves: &[TilePos], last_move: TilePos, player: Piece, depth: usize) -> TilePos {
+    const MAX_DEPTH: usize = 5;
+    if depth >= MAX_DEPTH {
+        return last_move;
+    }
+
+    todo!()
+}
+
+/// Computes the negamax score for the given player. A higher score means that the current state of
+/// the board is better for the given player.
+fn negamax_score(game: &Reversi, player: Piece) -> i32 {
+    // Computes the normal score of the game, then awards bonuses for corners and sides. Corners
+    // are more important than sides so they get a bigger bonus.
+    const CORNER_BONUS: i32 = 4;
+    const SIDE_BONUS: i32 = 2;
+
+    let (x_score, o_score) = game.scores();
+
+    let mut score = if player == Piece::X {
+        x_score as i32 - o_score as i32
+    } else {
+        o_score as i32 - x_score as i32
+    };
+
+    let grid = game.grid();
+    let nrows = grid.col_len();
+    let ncols = grid.row_len();
+
+    let corners = &[
+        TilePos {row: 0, col: 0},
+        TilePos {row: 0, col: ncols - 1},
+        TilePos {row: nrows - 1, col: 0},
+        TilePos {row: nrows - 1, col: ncols - 1},
+    ];
+    for corner in corners {
+        match grid.tile(corner) {
+            Some(piece) => if *piece == player {
+                score += CORNER_BONUS;
+            } else {
+                score -= CORNER_BONUS;
+            },
+
+            None => {},
+        }
+    }
+
+    for row in 0..nrows {
+        let side = TilePos {row, col: 0};
+        match grid.tile(&side) {
+            Some(piece) => if *piece == player {
+                score += SIDE_BONUS;
+            } else {
+                score -= SIDE_BONUS;
+            },
+
+            None => {},
+        }
+
+        let side = TilePos {row, col: ncols - 1};
+        match grid.tile(&side) {
+            Some(piece) => if *piece == player {
+                score += SIDE_BONUS;
+            } else {
+                score -= SIDE_BONUS;
+            },
+
+            None => {},
+        }
+    }
+
+    for col in 0..ncols {
+        let side = TilePos {row: 0, col};
+        match grid.tile(&side) {
+            Some(piece) => if *piece == player {
+                score += SIDE_BONUS;
+            } else {
+                score -= SIDE_BONUS;
+            },
+
+            None => {},
+        }
+
+        let side = TilePos {row: nrows - 1, col};
+        match grid.tile(&side) {
+            Some(piece) => if *piece == player {
+                score += SIDE_BONUS;
+            } else {
+                score -= SIDE_BONUS;
+            },
+
+            None => {},
+        }
+    }
+
+    score
 }
 
 fn print_game(game: &Reversi, valid_moves: &[TilePos]) {

@@ -49,3 +49,5 @@
   * Comment: A person new to Rust might try this, so it might be worth it
   * Code currently just ses `.iter().enumerate()`
 * Implement `valid_moves` and `is_valid_move` in terms of iterators
+* Refactor `negamax_score` to remove duplication using a separate function that
+  takes an iterator

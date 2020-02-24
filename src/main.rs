@@ -77,18 +77,14 @@ impl Grid {
         &self.tiles[pos.row][pos.col]
     }
 
-    /// Places the given piece on the tile at the given position
+    /// Places the given piece on the tile at the given position, overwriting the piece that was
+    /// previously at that position (if any)
     ///
     /// # Panics
     ///
-    /// This method panics if the position is outside the boundary of the board or if the tile
-    /// already contained a piece.
+    /// This method panics if the position is outside the boundary of the board
     fn place(&mut self, pos: TilePos, piece: Piece) {
-        let tile = &mut self.tiles[pos.row][pos.col];
-        assert!(tile.is_none(),
-            "bug: attempt to place a piece on a non-empty tile");
-
-        *tile = Some(piece);
+        self.tiles[pos.row][pos.col] = Some(piece);
     }
 }
 
@@ -167,9 +163,9 @@ impl Reversi {
         valid_moves
     }
 
-    /// Skips the turn of the current player, leave the board unmodified
-    fn skip_turn(&mut self) {
-        todo!()
+    /// Advances the turn by changing the current player, leave the board unmodified
+    fn advance_turn(&mut self) {
+        self.current_player = self.current_player.opposite();
     }
 
     /// Places a tile for the current player at the given position, updating any surrounding tiles
@@ -178,8 +174,17 @@ impl Reversi {
     /// # Panics
     ///
     /// Panics if the move is not valid for the current player.
-    fn make_move(&mut self, pos: TilePos) {
-        todo!()
+    fn make_move(&mut self, pos: &TilePos) {
+        let flips = self.compute_flips(pos);
+        assert!(!flips.is_empty(), "bug: attempt to make a move that would result in zero flips");
+
+        let player = self.current_player();
+        for flip_pos in flips {
+            self.grid.place(flip_pos, player.clone());
+        }
+        self.grid.place(pos.clone(), player.clone());
+
+        self.advance_turn();
     }
 
     /// Computes the tiles that would have to flip if the current piece was placed at the given
@@ -411,7 +416,7 @@ fn main() {
         if valid_moves.is_empty() {
             prompt("No moves available. Skipping turn. Press enter to continue...").unwrap();
             skipped = true;
-            game.skip_turn();
+            game.advance_turn();
             continue;
         }
         // If the previous turn was skipped, we can reset that now
@@ -419,7 +424,7 @@ fn main() {
 
         let pmove = prompt_move(&valid_moves);
         match pmove {
-            Ok(pmove) => game.make_move(pmove),
+            Ok(pmove) => game.make_move(&pmove),
 
             Err(ParseError::EndOfInput) => {
                 // Print a final newline

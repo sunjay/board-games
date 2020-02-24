@@ -1,3 +1,5 @@
+use std::thread;
+use std::time::Duration;
 use std::io::{self, Write};
 
 use yansi::Paint;
@@ -253,6 +255,18 @@ impl Reversi {
     }
 }
 
+/// Returns a move for the current player computed automatically
+fn compute_ai_move(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
+    random_ai(game, valid_moves)
+}
+
+fn random_ai(_game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
+    use rand::seq::SliceRandom;
+
+    let mut rng = rand::thread_rng();
+    valid_moves.choose(&mut rng).expect("bug: no valid moves to choose from").clone()
+}
+
 fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
     let grid = game.grid();
 
@@ -384,6 +398,11 @@ fn prompt(prompt: &str) -> Result<String, io::Error> {
 fn main() {
     let mut game = Reversi::new();
 
+    // Set this variable to control the game type
+    //let ai_controlled = &[]; // Human vs Human
+    let ai_controlled = &[Piece::O]; // Human vs AI
+    //let ai_controlled = &[Piece::X, Piece::O]; // AI vs AI
+
     let mut skipped = false;
     loop {
         let (x_score, o_score) = game.scores();
@@ -407,20 +426,36 @@ fn main() {
             break;
         }
 
+        let player = game.current_player();
+        let is_ai = ai_controlled.contains(&player);
+
         println!();
         print_game(&game, &valid_moves);
         println!();
         println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
-        println!("The current piece is: {}", format_piece(game.current_player()));
+        println!("The current piece is: {}", format_piece(player));
 
         if valid_moves.is_empty() {
-            prompt("No moves available. Skipping turn. Press enter to continue...").unwrap();
+            if is_ai {
+                println!("No moves available. Skipping turn. Press enter to continue...");
+            } else {
+                prompt("No moves available. Skipping turn. Press enter to continue...").unwrap();
+            }
+
             skipped = true;
             game.advance_turn();
             continue;
         }
         // If the previous turn was skipped, we can reset that now
         skipped = false;
+
+        if is_ai {
+            let pmove = compute_ai_move(&game, &valid_moves);
+            game.make_move(&pmove);
+            // Slow down the game a bit so it's easier to follow
+            thread::sleep(Duration::from_millis(200));
+            continue;
+        }
 
         let pmove = prompt_move(&valid_moves);
         match pmove {

@@ -1,5 +1,3 @@
-mod game_tree;
-
 use rand::{thread_rng, Rng, rngs::ThreadRng, seq::SliceRandom};
 
 use crate::{Reversi, TilePos, Piece};

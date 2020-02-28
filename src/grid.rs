@@ -41,7 +41,7 @@ impl Grid {
     }
 
     /// Returns the tile at the given position
-    pub fn tile(&self, pos: &TilePos) -> &Option<Piece> {
+    pub fn tile(&self, pos: TilePos) -> &Option<Piece> {
         &self.tiles[pos.row][pos.col]
     }
 

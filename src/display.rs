@@ -17,7 +17,7 @@ pub fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
 
     for (row, row_tiles) in grid.rows().iter().enumerate() {
         print_cell(Paint::new(&format!("{}", row+1)));
-        for (col, tile) in row_tiles.iter().enumerate() {
+        for (col, &tile) in row_tiles.iter().enumerate() {
             print_tile(tile, valid_moves.contains(&TilePos {row, col}));
         }
         println!();
@@ -26,9 +26,9 @@ pub fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
     }
 }
 
-fn print_tile(tile: &Option<Piece>, is_valid_move: bool) {
+fn print_tile(tile: Option<Piece>, is_valid_move: bool) {
     match tile {
-        Some(piece) => print_cell(piece.clone()),
+        Some(piece) => print_cell(piece),
 
         None if is_valid_move => print_cell(Paint::yellow("\u{25CB}")),
         None => print_cell(" "),

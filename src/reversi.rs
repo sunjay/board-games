@@ -31,7 +31,7 @@ impl Reversi {
 
     /// Returns the current player
     pub fn current_player(&self) -> Piece {
-        self.current_player.clone()
+        self.current_player
     }
 
     /// Returns the current scores for each player as a tuple: (x score, o score)
@@ -66,7 +66,7 @@ impl Reversi {
                 }
 
                 let pmove = TilePos {row, col};
-                if !self.compute_flips(&pmove).is_empty() {
+                if !self.compute_flips(pmove).is_empty() {
                     valid_moves.push(pmove);
                 }
             }
@@ -86,7 +86,7 @@ impl Reversi {
     /// # Panics
     ///
     /// Panics if the move is not valid for the current player.
-    pub fn make_move(&mut self, pos: &TilePos) {
+    pub fn make_move(&mut self, pos: TilePos) {
         let flips = self.compute_flips(pos);
         assert!(!flips.is_empty(), "bug: attempt to make a move that would result in zero flips");
 
@@ -101,7 +101,7 @@ impl Reversi {
 
     /// Computes the tiles that would have to flip if the current piece was placed at the given
     /// position
-    fn compute_flips(&self, pos: &TilePos) -> Vec<TilePos> {
+    fn compute_flips(&self, pos: TilePos) -> Vec<TilePos> {
         // Algorithm: Search each of the 8 cardinal directions. A tile is considered a valid move
         // if it is empty and if while searching in a direction we find at least one opponent piece
         // and then a player piece with no empty tiles in between. The "flips" are all opponent
@@ -137,7 +137,7 @@ impl Reversi {
                         col: col as usize,
                     };
 
-                    match grid.tile(&current_pos) {
+                    match grid.tile(current_pos) {
                         Some(piece) => {
                             if *piece == opponent {
                                 found_opponents.push(current_pos);

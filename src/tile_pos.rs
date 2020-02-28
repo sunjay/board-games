@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Represents the position of a tile on the grid
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TilePos {
     pub row: usize,
     pub col: usize,

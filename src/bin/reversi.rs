@@ -67,7 +67,7 @@ fn main() {
 
         if is_ai {
             let pmove = compute_ai_move(&game, &valid_moves);
-            game.make_move(&pmove);
+            game.make_move(pmove);
             // Slow down the game a bit so it's easier to follow
             thread::sleep(Duration::from_millis(200));
             continue;
@@ -75,7 +75,7 @@ fn main() {
 
         let pmove = prompt_move(&valid_moves);
         match pmove {
-            Ok(pmove) => game.make_move(&pmove),
+            Ok(pmove) => game.make_move(pmove),
 
             Err(ParseError::EndOfInput) => {
                 // Print a final newline

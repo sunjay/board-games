@@ -18,7 +18,7 @@ pub fn compute_ai_move(game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
 
 /// Randomly chooses a move from the set of valid moves
 fn random_ai(rng: &mut ThreadRng, _game: &Reversi, valid_moves: &[TilePos]) -> TilePos {
-    valid_moves.choose(rng).expect("bug: no valid moves to choose from").clone()
+    *valid_moves.choose(rng).expect("bug: no valid moves to choose from")
 }
 
 /// Chooses a move based on the negamax algorithm
@@ -54,7 +54,7 @@ fn negamax(
 
     let mut max_move = None;
     let mut max_score = i32::min_value();
-    for pmove in valid_moves {
+    for &pmove in valid_moves {
         let mut mgame = game.clone();
         mgame.make_move(pmove);
         let mvalid_moves = mgame.valid_moves();
@@ -65,7 +65,7 @@ fn negamax(
         // We want to find the score that is *lowest* from their perspective
         let score = -score;
         if score > max_score {
-            max_move = Some(pmove.clone());
+            max_move = Some(pmove);
             max_score = score;
         }
     }
@@ -99,7 +99,7 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
         TilePos {row: nrows - 1, col: 0},
         TilePos {row: nrows - 1, col: ncols - 1},
     ];
-    for corner in corners {
+    for &corner in corners {
         match grid.tile(corner) {
             Some(piece) => if *piece == player {
                 score += CORNER_BONUS;
@@ -113,7 +113,7 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
 
     for row in 0..nrows {
         let side = TilePos {row, col: 0};
-        match grid.tile(&side) {
+        match grid.tile(side) {
             Some(piece) => if *piece == player {
                 score += SIDE_BONUS;
             } else {
@@ -124,7 +124,7 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
         }
 
         let side = TilePos {row, col: ncols - 1};
-        match grid.tile(&side) {
+        match grid.tile(side) {
             Some(piece) => if *piece == player {
                 score += SIDE_BONUS;
             } else {
@@ -137,7 +137,7 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
 
     for col in 0..ncols {
         let side = TilePos {row: 0, col};
-        match grid.tile(&side) {
+        match grid.tile(side) {
             Some(piece) => if *piece == player {
                 score += SIDE_BONUS;
             } else {
@@ -148,7 +148,7 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
         }
 
         let side = TilePos {row: nrows - 1, col};
-        match grid.tile(&side) {
+        match grid.tile(side) {
             Some(piece) => if *piece == player {
                 score += SIDE_BONUS;
             } else {

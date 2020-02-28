@@ -139,10 +139,10 @@ impl Reversi {
 
                     match grid.tile(current_pos) {
                         Some(piece) => {
-                            if *piece == opponent {
+                            if piece == opponent {
                                 found_opponents.push(current_pos);
 
-                            } else if *piece == player {
+                            } else if piece == player {
                                 // If we didn't find any opponent pieces, this will not add any flips
                                 flips.extend(found_opponents);
                                 // Stop searching

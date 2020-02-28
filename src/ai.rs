@@ -89,7 +89,21 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
         o_score as i32 - x_score as i32
     };
 
+    // Adds the given value to the score. Setting the sign of the value based on whether the piece
+    // this value is being awarded for is the current player or the opponent.
+    let mut add_score = |piece: Piece, value: i32| if piece == player {
+        score += value;
+    } else {
+        score -= value;
+    };
+
     let grid = game.grid();
+
+    // Adds to score based on the piece at the given position (if any)
+    let mut add_tile_score = |pos, value| if let Some(piece) = grid.tile(pos) {
+        add_score(piece, value);
+    };
+
     let nrows = grid.col_len();
     let ncols = grid.row_len();
 
@@ -100,63 +114,23 @@ fn negamax_score(rng: &mut ThreadRng, game: &Reversi, player: Piece) -> i32 {
         TilePos {row: nrows - 1, col: ncols - 1},
     ];
     for &corner in corners {
-        match grid.tile(corner) {
-            Some(piece) => if *piece == player {
-                score += CORNER_BONUS;
-            } else {
-                score -= CORNER_BONUS;
-            },
-
-            None => {},
-        }
+        add_tile_score(corner, CORNER_BONUS);
     }
 
     for row in 0..nrows {
         let side = TilePos {row, col: 0};
-        match grid.tile(side) {
-            Some(piece) => if *piece == player {
-                score += SIDE_BONUS;
-            } else {
-                score -= SIDE_BONUS;
-            },
-
-            None => {},
-        }
+        add_tile_score(side, SIDE_BONUS);
 
         let side = TilePos {row, col: ncols - 1};
-        match grid.tile(side) {
-            Some(piece) => if *piece == player {
-                score += SIDE_BONUS;
-            } else {
-                score -= SIDE_BONUS;
-            },
-
-            None => {},
-        }
+        add_tile_score(side, SIDE_BONUS);
     }
 
     for col in 0..ncols {
         let side = TilePos {row: 0, col};
-        match grid.tile(side) {
-            Some(piece) => if *piece == player {
-                score += SIDE_BONUS;
-            } else {
-                score -= SIDE_BONUS;
-            },
-
-            None => {},
-        }
+        add_tile_score(side, SIDE_BONUS);
 
         let side = TilePos {row: nrows - 1, col};
-        match grid.tile(side) {
-            Some(piece) => if *piece == player {
-                score += SIDE_BONUS;
-            } else {
-                score -= SIDE_BONUS;
-            },
-
-            None => {},
-        }
+        add_tile_score(side, SIDE_BONUS);
     }
 
     // A perfectly deterministic AI is pretty boring...

@@ -9,9 +9,9 @@ pub struct Reversi {
     valid_moves: Vec<TilePos>,
 }
 
-impl Reversi {
+impl Default for Reversi {
     /// Creates a new reversi game with the default pieces placed
-    pub fn new() -> Self {
+    fn default() -> Self {
         let mut grid = Grid::default();
         // The default piece are placed in a 2x2 grid of alternating colors
         grid.place(TilePos {row: 3, col: 3}, Piece::X);
@@ -29,7 +29,9 @@ impl Reversi {
             valid_moves,
         }
     }
+}
 
+impl Reversi {
     /// Returns the grid
     pub fn grid(&self) -> &Grid {
         &self.grid

@@ -12,7 +12,7 @@ use board_games::{
 };
 
 fn main() {
-    let mut game = Reversi::new();
+    let mut game = Reversi::default();
 
     // Set this variable to control the game type
     //let ai_controlled = &[]; // Human vs Human

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use yansi::Paint;
 
 use crate::{Reversi, TilePos, Piece};
@@ -5,7 +7,7 @@ use crate::{Reversi, TilePos, Piece};
 pub fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
     let grid = game.grid();
 
-    print_cell(Paint::new(" "));
+    print_cell(" ");
     for col_i in 0..grid.row_len() {
         print_cell(Paint::new(&format!("{}", (b'A' + col_i as u8) as char)));
     }
@@ -26,21 +28,14 @@ pub fn print_game(game: &Reversi, valid_moves: &[TilePos]) {
 
 fn print_tile(tile: &Option<Piece>, is_valid_move: bool) {
     match tile {
-        Some(piece) => print_cell(format_piece(piece.clone())),
+        Some(piece) => print_cell(piece.clone()),
 
         None if is_valid_move => print_cell(Paint::yellow("\u{25CB}")),
-        None => print_cell(Paint::new(" ")),
+        None => print_cell(" "),
     }
 }
 
-pub fn format_piece(piece: Piece) -> Paint<&'static str> {
-    match piece {
-        Piece::X => Paint::red("\u{25CF}"),
-        Piece::O => Paint::blue("\u{25CF}"),
-    }
-}
-
-fn print_cell(value: Paint<&str>) {
+fn print_cell<T: Display>(value: T) {
     print!(" {} \u{2502}", value);
 }
 

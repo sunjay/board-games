@@ -8,7 +8,6 @@ use board_games::{
     prompt,
     prompt_move,
     print_game,
-    format_piece,
     compute_ai_move,
 };
 
@@ -31,12 +30,12 @@ fn main() {
             println!();
             print_game(&game, &valid_moves);
             println!();
-            println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
+            println!("Score: {} {} | {} {}", Piece::X, x_score, Piece::O, o_score);
 
             use std::cmp::Ordering::*;
             match x_score.cmp(&o_score) {
-                Greater => println!("The winner is: {}", format_piece(Piece::X)),
-                Less => println!("The winner is: {}", format_piece(Piece::O)),
+                Greater => println!("The winner is: {}", Piece::X),
+                Less => println!("The winner is: {}", Piece::O),
                 Equal => println!("The game ended with a tie"),
             }
 
@@ -49,8 +48,8 @@ fn main() {
         println!();
         print_game(&game, &valid_moves);
         println!();
-        println!("Score: {} {} | {} {}", format_piece(Piece::X), x_score, format_piece(Piece::O), o_score);
-        println!("The current piece is: {}", format_piece(player));
+        println!("Score: {} {} | {} {}", Piece::X, x_score, Piece::O, o_score);
+        println!("The current piece is: {}", player);
 
         if valid_moves.is_empty() {
             if is_ai {
